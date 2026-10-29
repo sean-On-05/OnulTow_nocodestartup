@@ -1,11 +1,172 @@
-<div align="center">
+# 오늘둘 (Daily Two) — AI 뉴스 브리핑 웹앱
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+> **"하루 1분, 세상을 10줄로 읽다."**  
+> 세상을 놓치지 않되, 정보에 압도되지 않도록.
 
-  <h1>Built with AI Studio</h2>
+대학 중간평가 과제 제출을 위한 비상업적 시연 프로젝트(MVP)입니다.  
+뉴스를 매일 읽기에는 시간적·심리적 부담을 느끼는 대학생, 사회초년생 및 일반 사용자를 위해 기획되었습니다.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+---
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 1. 프로젝트 소개 & 핵심 경험
 
-</div>
+'오늘둘(Daily Two)'은 매일 서로 다른 뉴스 이슈 **10개**를 엄선하여 브리핑합니다.
+
+- **국내외 주요 뉴스 5개**: 국내 주요 2개, 해외 주요 2개, 중요도 높은 핵심 1개
+- **사용자 관심 뉴스 5개**: 온보딩에서 선택한 8개 분야 중 본인의 관심 카테고리 뉴스 5개
+- **한 화면 2개 카드**: 화면을 반분하여 상단에 주요 뉴스 1개, 하단에 관심 뉴스 1개 표시 (데스크톱은 좌우 분할)
+- **5페이지 스와이프**: 좌우 터치 제스처, 방향키(←, →), 또는 하단 버튼으로 총 5페이지 탐색
+- **한 줄 핵심 제목 & 3줄 상세 구조**:
+  - 기본 상태에서는 군더더기 없는 한 줄 핵심 제목만 표시
+  - 카드를 터치하면 상세 모달이 열리며 3문답 구조로 설명:
+    - **① 무슨 일이야?**: 실제 일어난 구체적 사건 및 발표 내용
+    - **② 왜 중요해?**: 사회, 경제, 기술, 글로벌 관점에서의 핵심 의미
+    - **③ 앞으로는?**: 향후 전개될 일정 및 주목해야 할 파급 효과
+- **원문 연결**: 기사 출처(언론사)와 실제 원문 기사 링크 바로가기 제공
+- **브리핑 종료 화면**: 5페이지를 모두 읽으면 완독을 기념하고 "내일 다시 만나요" 화면 제공 (무한 스크롤 및 피드백 공해 배제)
+
+---
+
+## 2. 사용한 기술 스택
+
+- **프론트엔드**: React 19, TypeScript, Tailwind CSS v4, Lucide React
+- **빌드 도구**: Vite 8
+- **백엔드 & 서버리스**: Node.js, Express, Vercel Serverless Function (`/api/briefing`)
+- **뉴스 데이터**: Google News RSS (국내·외신·카테고리별 실시간 피드 파싱)
+- **AI 요약 모델**: Google Gemini API (`gemini-3.8-flash` via `@google/genai`)
+- **상태 & 설정**: 브라우저 `localStorage` (카테고리, 완독 일자, 열람 기록 영구 저장)
+- **배포 지원**: GitHub Repository 연동 및 Vercel 원클릭 배포 (`vercel.json`)
+
+---
+
+## 3. Google News RSS 수집 및 알고리즘
+
+별도의 유료 뉴스 API 키나 크롤링 없이, Google이 공식 제공하는 RSS 피드를 Node.js 서버에서 안전하게 수집합니다.
+
+- **국내 주요 뉴스 피드**: `https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko`
+- **해외 주요 뉴스 피드**: `https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en`
+- **관심 카테고리 (8대 분야)**:
+  1. **IT·AI**: `topic/TECHNOLOGY`
+  2. **경제·금융**: `topic/BUSINESS`
+  3. **정치·사회**: `search?q=정치+사회`
+  4. **국제·외교**: `topic/WORLD`
+  5. **과학·환경**: `topic/SCIENCE`
+  6. **문화·연예**: `topic/ENTERTAINMENT`
+  7. **스포츠**: `topic/SPORTS`
+  8. **생활·트렌드**: `search?q=생활+트렌드`
+
+### 수집 및 정제 처리
+
+1. **서버 처리**: 브라우저 CORS 제약 없이 Node.js 백엔드에서 비동기 병렬 요청(`Promise.all`)
+2. **XML 파싱**: 경량 `fast-xml-parser`를 사용해 기사 제목, 링크, 언론사명, 발행일 추출
+3. **중복 필터링**: 형태소 및 단어 집합 자카드 유사도 분석을 통해 같은 사건을 다룬 기사를 자동 필터링
+4. **당일 인메모리 캐싱**: 한국 표준시(Asia/Seoul) 기준 동일 날짜 동일 카테고리에 대해 불필요한 중복 호출 방지
+
+---
+
+## 4. 로컬 개발 환경 실행 방법
+
+### 사전 요구사항
+- Node.js 18 이상
+- npm 또는 yarn
+
+### 실행 명령어
+
+```bash
+# 1. 의존성 설치
+npm install
+
+# 2. 로컬 풀스택 개발 서버 실행 (Port 3000)
+npm run dev
+
+# 3. 브라우저에서 접속
+# http://localhost:3000
+```
+
+### 프로덕션 빌드 & 테스트
+
+```bash
+# Vite 정적 번들 빌드
+npm run build
+
+# TypeScript 타입 검사
+npm run lint
+```
+
+---
+
+## 5. Gemini API 환경변수 설정
+
+Gemini API 키는 서버 환경에서만 안전하게 사용되며, 브라우저 클라이언트 코드에 절대 노출되지 않습니다.
+
+1. [Google AI Studio](https://aistudio.google.com/)에서 API 키를 발급받습니다.
+2. 로컬 실행 시 프로젝트 루트에 `.env` 파일을 생성하고 키를 입력합니다:
+
+```bash
+# .env 파일
+GEMINI_API_KEY="YOUR_ACTUAL_GEMINI_API_KEY"
+```
+
+3. 배포 환경(Vercel)에서는 대시보드의 **Settings > Environment Variables** 메뉴에서 `GEMINI_API_KEY`를 등록합니다.
+4. *참고*: Gemini API 키가 없거나 할당량 제한(503 Spike 등) 발생 시에도, 자체 파서가 실제 RSS 기사 데이터를 기반으로 3줄 요약을 자동 생성하여 서비스가 중단되지 않습니다.
+
+---
+
+## 6. GitHub 업로드 및 Vercel 배포 가이드
+
+### GitHub 저장소 업로드
+
+```bash
+git init
+git add .
+git commit -m "feat: 오늘둘(Daily Two) AI 뉴스 브리핑 MVP 배포 준비"
+git branch -M main
+git remote add origin https://github.com/사용자명/저장소명.git
+git push -u origin main
+```
+
+*(보안 주의: `.gitignore`에 `.env*`가 포함되어 있으므로 API 키가 GitHub에 커밋되지 않습니다.)*
+
+### Vercel 배포 방법
+
+1. [Vercel](https://vercel.com) 로그인 후 **"Add New Project"** 클릭
+2. 방금 올린 GitHub 저장소를 선택하고 **Import** 클릭
+3. **Configure Project** 화면에서:
+   - Framework Preset: `Vite` (자동 감지)
+   - Root Directory: `./` (기본값)
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+4. **Environment Variables** 섹션에 키 추가:
+   - `GEMINI_API_KEY`: 본인의 Gemini API 키 입력
+5. **Deploy** 버튼 클릭
+6. 배포 완료 후 제공되는 Vercel 도메인(`*.vercel.app`)으로 바로 접속 가능합니다.
+   - 정적 UI 화면과 함께 `/api/briefing` 서버리스 함수가 자동으로 배포되어 동작합니다.
+
+---
+
+## 7. 주요 기능 및 사용 방법
+
+1. **온보딩 화면**: 첫 방문 시 8대 카테고리(IT·AI, 경제, 정치, 국제, 과학, 문화, 스포츠, 생활) 중 1개를 선택합니다.
+2. **오늘의 브리핑**:
+   - 1페이지당 상단(주요 뉴스), 하단(관심 뉴스) 2개의 카드가 배치됩니다.
+   - 스마트폰에서는 화면을 좌우로 스와이프하여 다음/이전 뉴스로 이동합니다.
+   - 데스크톱에서는 키보드 좌우 방향키(`←`, `→`) 또는 하단 네비게이션 버튼을 사용할 수 있습니다.
+3. **3줄 상세 모달**:
+   - 관심 있는 뉴스를 탭하면 상세 모달이 열립니다.
+   - **① 무슨 일이야? ② 왜 중요해? ③ 앞으로는?** 세 가지 축으로 사건을 빠르게 이해합니다.
+   - **원문 기사 보기** 버튼을 누르면 해당 언론사의 실제 뉴스 원문으로 새 창 연결됩니다.
+4. **설정 모달 (상단 톱니바퀴 아이콘)**:
+   - 관심 카테고리를 실시간으로 변경할 수 있습니다.
+   - '최신 브리핑 새로 수집하기'로 강제 리프레시할 수 있습니다.
+   - 시연 및 채점 편의를 위한 **'데모 모드' 토글**을 제공합니다.
+5. **브리핑 종료 화면**:
+   - 5페이지를 모두 넘기면 "오늘의 브리핑 끝! 세상의 흐름을 확인했어요." 문구와 함께 완독 카드가 표시됩니다.
+   - "처음부터 다시 보기" 버튼을 누르면 1페이지로 리셋됩니다.
+
+---
+
+## 8. 구현상 한계점 및 과제 평가 안내
+
+- **외부 데이터베이스 제외**: 과제 MVP 취지에 따라 복잡한 회원가입이나 RDBMS 없이 `localStorage` 및 서버 인메모리 캐시로 동작합니다.
+- **오전 7시 크론 스케줄러**: 정기 배치 작업 없이도, 사용자가 접속하는 시점에 당일 최초 요청일 경우 실시간으로 수집·생성하고 이후 접속자에게는 캐시된 브리핑을 고속 제공합니다.
+- **안전 모드 (Demo Fallback)**: Google News RSS 차단이나 네트워크 장애 시에도 평가자가 앱의 전체 UX(온보딩, 5페이지 스와이프, 3줄 모달, 완독 화면)를 온전히 검증할 수 있도록 10개의 고품질 시연용 데이터가 완비되어 있습니다.

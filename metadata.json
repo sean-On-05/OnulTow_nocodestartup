@@ -1,0 +1,6 @@
+{
+  "name": "오늘둘 (Daily Two) - AI 뉴스 브리핑",
+  "description": "하루 1분, 세상을 10줄로 읽다. 국내외 주요 뉴스 5개와 관심 카테고리 뉴스 5개를 엄선하여 Gemini AI가 요약해주는 미니멀 뉴스 브리핑 웹앱.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
